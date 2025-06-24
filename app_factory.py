@@ -5,11 +5,15 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 from contextlib import asynccontextmanager
 
+from controllers import test_router
+
 from extensions import (
     ext_database,
+    ext_logging
 )
 
 EXTENSIONS = [
+    ext_logging,
     ext_database,
 ]
 
@@ -44,15 +48,15 @@ def create_app() -> FastAPI:
             # 约定：每个 ext 模块都提供 init_app()，做启动阶段的工作
             ext.init_app(app)
             t1 = time.perf_counter()
-            # logging.info(f"Loaded {ext.__name__} in {(t1 - t0) * 1000:.2f}ms")
-            print(f"Loaded {ext.__name__} in {(t1 - t0) * 1000:.2f}ms")
+            logging.info(f"Loaded {ext.__name__} in {(t1 - t0) * 1000:.2f}ms")
+            # print(f"Loaded {ext.__name__} in {(t1 - t0) * 1000:.2f}ms")
         end = time.perf_counter()
         
-        # logging.info(f"Application startup finished in {(end - start)*1000:.2f}ms")
+        logging.info(f"Application startup finished in {(end - start)*1000:.2f}ms")
 
-        print(f"Application startup finished in {(end - start)*1000:.2f}ms")
+        # print(f"Application startup finished in {(end - start)*1000:.2f}ms")
 
-        print("engine in lifespan:", app.state.engine)
+        logging.info(f"engine in lifespan: {app.state.engine}")
 
         yield  # —— 业务请求处理阶段 —— #
 
@@ -66,5 +70,7 @@ def create_app() -> FastAPI:
     
     # 为应用设置 lifespan
     app = FastAPI(lifespan=lifespan)
+
+    app.include_router(test_router)
     
     return app
